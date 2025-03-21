@@ -38,38 +38,48 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
-    const session = await getServerSession(authOptions);
+    const { tvShowId } = await request.json();
 
-    if (!session?.user?.id) {
+    if (!tvShowId) {
       return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
-    }
-
-    const body = await request.json();
-    const { mediaType, mediaId } = body;
-
-    if (!mediaType || !mediaId) {
-      return NextResponse.json(
-        { error: "Media type and ID are required" },
+        { error: "TV Show ID is required" },
         { status: 400 }
       );
     }
 
+    // Check if the item is already in the watchlist
+    const existingItem = await prisma.watchlist.findFirst({
+      where: {
+        userId: session.user.id,
+        tvShowId: tvShowId,
+      },
+    });
+
+    if (existingItem) {
+      return NextResponse.json(
+        { error: "Item already in watchlist" },
+        { status: 400 }
+      );
+    }
+
+    // Add to watchlist
     const watchlistItem = await prisma.watchlist.create({
       data: {
         userId: session.user.id,
-        ...(mediaType === "movie"
-          ? { movieId: mediaId }
-          : { tvShowId: mediaId }),
+        tvShowId: tvShowId,
       },
     });
 
     return NextResponse.json(watchlistItem);
   } catch (error) {
-    console.error("Watchlist add error:", error);
+    console.error("Error adding to watchlist:", error);
     return NextResponse.json(
       { error: "Failed to add to watchlist" },
       { status: 500 }
@@ -78,36 +88,33 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
-    const session = await getServerSession(authOptions);
+    const { tvShowId } = await request.json();
 
-    if (!session?.user?.id) {
+    if (!tvShowId) {
       return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
-    }
-
-    const searchParams = request.nextUrl.searchParams;
-    const watchlistId = searchParams.get("id");
-
-    if (!watchlistId) {
-      return NextResponse.json(
-        { error: "Watchlist ID is required" },
+        { error: "TV Show ID is required" },
         { status: 400 }
       );
     }
 
-    await prisma.watchlist.delete({
+    // Remove from watchlist
+    await prisma.watchlist.deleteMany({
       where: {
-        id: watchlistId,
         userId: session.user.id,
+        tvShowId: tvShowId,
       },
     });
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Watchlist delete error:", error);
+    console.error("Error removing from watchlist:", error);
     return NextResponse.json(
       { error: "Failed to remove from watchlist" },
       { status: 500 }

@@ -2,8 +2,12 @@ import { Suspense } from "react";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { StarIcon } from "@heroicons/react/20/solid";
+import { getServerSession } from "next-auth";
 import { tmdbService } from "@/lib/tmdb";
 import { getImageUrl } from "@/lib/utils";
+import { prisma } from "@/lib/prisma";
+import { WatchlistButton } from "@/components/WatchlistButton";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 interface TVShowPageProps {
   params: {
@@ -13,7 +17,40 @@ interface TVShowPageProps {
 
 async function TVShowContent({ id }: { id: string }) {
   try {
-    const show = await tmdbService.getTVShowDetails(parseInt(id));
+    const [show, session] = await Promise.all([
+      tmdbService.getTVShowDetails(parseInt(id)),
+      getServerSession(authOptions)
+    ]);
+
+    // Check if the show is in the user's watchlist
+    let isInWatchlist = false;
+    if (session?.user?.id) {
+      const watchlistItem = await prisma.watchlist.findFirst({
+        where: {
+          userId: session.user.id,
+          tvShowId: id,
+        },
+      });
+      isInWatchlist = !!watchlistItem;
+    }
+
+    // First save the show in our database if it doesn't exist
+    const dbShow = await prisma.tVShow.upsert({
+      where: { tmdbId: show.id },
+      update: {},
+      create: {
+        id: show.id.toString(),
+        tmdbId: show.id,
+        title: show.name,
+        overview: show.overview,
+        posterPath: show.poster_path,
+        backdropPath: show.backdrop_path,
+        firstAirDate: show.first_air_date ? new Date(show.first_air_date) : null,
+        voteAverage: show.vote_average,
+        voteCount: show.vote_count,
+        popularity: show.popularity,
+      },
+    });
 
     return (
       <div className="space-y-8">
@@ -33,7 +70,10 @@ async function TVShowContent({ id }: { id: string }) {
 
         <div className="space-y-4">
           <div>
-            <h1 className="text-4xl font-bold tracking-tight">{show.name}</h1>
+            <div className="flex items-center justify-between">
+              <h1 className="text-4xl font-bold tracking-tight">{show.name}</h1>
+              <WatchlistButton tvShowId={dbShow.id} isInWatchlist={isInWatchlist} />
+            </div>
             <div className="mt-2 flex items-center gap-2 text-muted-foreground">
               {show.first_air_date && (
                 <span>{new Date(show.first_air_date).getFullYear()}</span>
@@ -55,6 +95,7 @@ async function TVShowContent({ id }: { id: string }) {
       </div>
     );
   } catch (error) {
+    console.error("Error loading TV show:", error);
     notFound();
   }
 }

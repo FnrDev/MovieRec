@@ -3,7 +3,7 @@
 import { Fragment } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signIn, signOut, useSession } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { Menu, Transition } from "@headlessui/react";
 import { UserCircleIcon } from "@heroicons/react/24/outline";
 import { cn } from "@/lib/utils";
@@ -102,13 +102,24 @@ export function Navigation() {
                 </Transition>
               </Menu>
             ) : (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => signIn()}
-              >
-                Sign in
-              </Button>
+              <div className="flex items-center space-x-2">
+                <Link href="/auth/signin">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                  >
+                    Sign in
+                  </Button>
+                </Link>
+                <Link href="/auth/register">
+                  <Button
+                    variant="default"
+                    size="sm"
+                  >
+                    Register
+                  </Button>
+                </Link>
+              </div>
             )}
           </div>
         </div>

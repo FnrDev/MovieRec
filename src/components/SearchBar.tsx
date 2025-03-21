@@ -13,17 +13,18 @@ export function SearchBar() {
 
   const handleSearch = useCallback(
     (term: string) => {
+      if (!term.trim()) return;
       const params = new URLSearchParams();
-      if (term) {
-        params.set("query", term);
-      }
-      router.push(`/search${term ? `?${params.toString()}` : ""}`);
+      params.set("query", term);
+      router.push(`/search?${params.toString()}`);
     },
     [router]
   );
 
   useEffect(() => {
-    handleSearch(debouncedSearch);
+    if (debouncedSearch.trim()) {
+      handleSearch(debouncedSearch);
+    }
   }, [debouncedSearch, handleSearch]);
 
   return (
