@@ -5,11 +5,10 @@ import { StarIcon } from "@heroicons/react/20/solid";
 import { tmdbService } from "@/lib/tmdb";
 import { getImageUrl } from "@/lib/utils";
 
-interface MoviePageProps {
-  params: {
-    id: string;
-  };
-}
+type MoviePageProps = {
+  params: { id: string };
+  searchParams: { [key: string]: string | string[] | undefined };
+};
 
 async function MovieContent({ id }: { id: string }) {
   try {

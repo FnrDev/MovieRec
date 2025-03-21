@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { config as authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
@@ -37,11 +37,14 @@ export async function GET() {
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      { error: "Authentication required" },
+      { status: 401 }
+    );
   }
 
   try {
@@ -49,31 +52,26 @@ export async function POST(request: NextRequest) {
 
     if (!tvShowId) {
       return NextResponse.json(
-        { error: "TV Show ID is required" },
+        { error: "TV show ID is required" },
         { status: 400 }
       );
     }
 
-    // Check if the item is already in the watchlist
-    const existingItem = await prisma.watchlist.findFirst({
-      where: {
-        userId: session.user.id,
-        tvShowId: tvShowId,
-      },
+    const tvShow = await prisma.tVShow.findUnique({
+      where: { id: tvShowId },
     });
 
-    if (existingItem) {
+    if (!tvShow) {
       return NextResponse.json(
-        { error: "Item already in watchlist" },
-        { status: 400 }
+        { error: "TV show not found" },
+        { status: 404 }
       );
     }
 
-    // Add to watchlist
     const watchlistItem = await prisma.watchlist.create({
       data: {
         userId: session.user.id,
-        tvShowId: tvShowId,
+        tvShowId,
       },
     });
 
@@ -87,11 +85,14 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function DELETE(request: NextRequest) {
+export async function DELETE(request: Request) {
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      { error: "Authentication required" },
+      { status: 401 }
+    );
   }
 
   try {
@@ -99,16 +100,15 @@ export async function DELETE(request: NextRequest) {
 
     if (!tvShowId) {
       return NextResponse.json(
-        { error: "TV Show ID is required" },
+        { error: "TV show ID is required" },
         { status: 400 }
       );
     }
 
-    // Remove from watchlist
     await prisma.watchlist.deleteMany({
       where: {
         userId: session.user.id,
-        tvShowId: tvShowId,
+        tvShowId,
       },
     });
 
