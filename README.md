@@ -1,36 +1,100 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Movie & TV Show Recommendation Platform
+
+A modern web application that helps users discover movies and TV shows based on their preferences and viewing history.
+
+## Features
+
+- **User Authentication**: Secure sign-up and login functionality
+- **Search & Filtering**: Search for movies and TV shows by title, genre, release year, or rating
+- **Personalized Recommendations**: Get content recommendations based on your preferences and watch history
+- **Watchlist**: Save movies and shows to watch later
+- **Rating System**: Rate movies and TV shows with a 5-star system
+- **Trending Content**: Discover what's popular right now
+
+## Tech Stack
+
+- **Frontend**: Next.js 14 with App Router
+- **Backend**: Next.js API Routes
+- **Database**: PostgreSQL with Prisma ORM
+- **Authentication**: NextAuth.js
+- **External API**: TMDB (The Movie Database)
+- **Styling**: Tailwind CSS
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- Node.js 18.x or later
+- PostgreSQL database
+- TMDB API key
+
+### Environment Setup
+
+1. Clone the repository
+2. Copy `.env.example` to `.env` and fill in your environment variables:
+
+```env
+# Database
+DATABASE_URL="postgresql://user:password@localhost:5432/movie_recommendation?schema=public"
+
+# NextAuth.js
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="your-nextauth-secret"
+
+# TMDB API
+TMDB_API_KEY="your-tmdb-api-key"
+TMDB_API_BASE_URL="https://api.themoviedb.org/3"
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Installation
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Install dependencies:
+```bash
+npm install
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+2. Set up the database:
+```bash
+npx prisma generate
+npx prisma db push
+```
 
-## Learn More
+3. Start the development server:
+```bash
+npm run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+## API Endpoints
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Authentication
+- `POST /api/auth/signup`: Create a new user account
+- `POST /api/auth/signin`: Sign in to an existing account
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Search
+- `GET /api/search?query={query}&page={page}`: Search for movies and TV shows
 
-## Deploy on Vercel
+### Recommendations
+- `GET /api/recommendations`: Get personalized recommendations (requires authentication)
+- `GET /api/trending`: Get trending movies and TV shows
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Watchlist
+- `GET /api/watchlist`: Get user's watchlist
+- `POST /api/watchlist`: Add item to watchlist
+- `DELETE /api/watchlist?id={id}`: Remove item from watchlist
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Ratings
+- `GET /api/ratings`: Get user's ratings
+- `POST /api/ratings`: Rate a movie or TV show
+- `DELETE /api/ratings?id={id}`: Remove a rating
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Open a pull request
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
